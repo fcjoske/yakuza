@@ -1,0 +1,938 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0a0614" />
+  <title>Nika — My Favorite Substory (Yakuza 0)</title>
+  <style>
+    :root{
+      --bg:#070411;
+      --ink:#f4f2ff;
+      --muted:rgba(244,242,255,.72);
+      --glass:rgba(20,12,42,.55);
+      --glass2:rgba(10,6,20,.72);
+      --line:rgba(255,255,255,.10);
+      --pink:#ff4bd1;
+      --cyan:#35d7ff;
+      --gold:#ffcc4d;
+      --ok:#2bff98;
+      --bad:#ff4b6e;
+      --shadow: 0 18px 50px rgba(0,0,0,.55);
+      --r:18px;
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      color:var(--ink);
+      background: var(--bg);
+      overflow-x:hidden;
+    }
+
+    /* Background carousel */
+    .bg{
+      position:fixed; inset:0;
+      z-index:-3;
+      background:#000;
+    }
+    .bg::before{
+      content:"";
+      position:absolute; inset:-2px;
+      background:
+        radial-gradient(1200px 700px at 10% 20%, rgba(255,75,209,.25), transparent 55%),
+        radial-gradient(1000px 600px at 90% 20%, rgba(53,215,255,.22), transparent 55%),
+        radial-gradient(900px 700px at 55% 110%, rgba(255,204,77,.15), transparent 55%),
+        linear-gradient(180deg, rgba(0,0,0,.35), rgba(0,0,0,.75));
+      z-index:1;
+      pointer-events:none;
+    }
+    .bgMedia{
+      position:absolute; inset:0;
+      width:100%; height:100%;
+      object-fit:cover;
+      filter:saturate(1.05) contrast(1.05) brightness(.7);
+      transform:scale(1.03);
+      z-index:0;
+      opacity:0;
+      transition: opacity 900ms ease;
+    }
+    .bgMedia.active{opacity:1}
+
+    /* Little floating neon "rain" */
+    .rain{
+      position:fixed; inset:0;
+      z-index:-2;
+      pointer-events:none;
+      opacity:.55;
+      mix-blend-mode:screen;
+    }
+
+    /* Layout */
+    .wrap{
+      min-height:100dvh;
+      padding: max(18px, env(safe-area-inset-top)) 16px max(18px, env(safe-area-inset-bottom));
+      display:flex;
+      justify-content:center;
+      align-items:flex-start;
+    }
+
+    .shell{
+      width:min(980px, 100%);
+      display:grid;
+      grid-template-columns: 1.05fr .95fr;
+      gap:14px;
+      align-items:start;
+    }
+
+    @media (max-width: 860px){
+      .shell{grid-template-columns:1fr;}
+    }
+
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.03));
+      border:1px solid var(--line);
+      border-radius:var(--r);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      backdrop-filter: blur(10px);
+    }
+
+    .top{
+      padding:16px 16px 12px;
+      border-bottom:1px solid var(--line);
+      background: linear-gradient(180deg, rgba(10,6,20,.65), rgba(10,6,20,.15));
+    }
+
+    .badgeRow{display:flex; gap:10px; flex-wrap:wrap; align-items:center;}
+    .badge{
+      display:inline-flex; gap:8px; align-items:center;
+      padding:8px 10px;
+      border-radius:999px;
+      background: rgba(0,0,0,.35);
+      border:1px solid rgba(255,255,255,.12);
+      font-size:12px;
+      letter-spacing:.3px;
+    }
+    .dot{width:8px;height:8px;border-radius:50%; background:var(--cyan); box-shadow:0 0 18px rgba(53,215,255,.65)}
+    .dot.pink{background:var(--pink); box-shadow:0 0 18px rgba(255,75,209,.65)}
+    .dot.gold{background:var(--gold); box-shadow:0 0 18px rgba(255,204,77,.55)}
+
+    h1{
+      margin:10px 0 6px;
+      font-size: clamp(24px, 4vw, 38px);
+      line-height:1.06;
+      letter-spacing: .2px;
+    }
+    .sub{
+      margin:0;
+      color:var(--muted);
+      font-size:14px;
+      line-height:1.5;
+    }
+
+    .actions{
+      padding:14px 16px 16px;
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+
+    button{
+      appearance:none;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.35);
+      color:var(--ink);
+      border-radius: 14px;
+      padding:11px 12px;
+      font-weight:600;
+      letter-spacing:.2px;
+      cursor:pointer;
+      transition: transform .08s ease, background .2s ease, border-color .2s ease;
+      display:inline-flex;
+      gap:10px;
+      align-items:center;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    button:active{transform: translateY(1px) scale(.99)}
+    button:hover{border-color: rgba(255,255,255,.22)}
+
+    .primary{
+      background: linear-gradient(90deg, rgba(255,75,209,.18), rgba(53,215,255,.16));
+      border-color: rgba(255,255,255,.20);
+    }
+
+    .icon{
+      width:18px;height:18px;
+      border-radius:6px;
+      background: rgba(255,255,255,.10);
+      border:1px solid rgba(255,255,255,.12);
+      display:grid; place-items:center;
+      font-size:12px;
+    }
+
+    /* Tabs */
+    .tabs{display:flex; gap:8px; padding:12px 12px 0; flex-wrap:wrap}
+    .tab{
+      padding:10px 11px;
+      border-radius:999px;
+      font-size:13px;
+      background: rgba(0,0,0,.28);
+      border:1px solid rgba(255,255,255,.10);
+      color: rgba(244,242,255,.75);
+      cursor:pointer;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .tab.active{
+      color:var(--ink);
+      border-color: rgba(255,255,255,.22);
+      background: linear-gradient(90deg, rgba(255,75,209,.16), rgba(53,215,255,.12));
+    }
+
+    .panel{padding:14px 14px 16px;}
+    .panel[hidden]{display:none}
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:12px;
+    }
+    @media (max-width: 480px){
+      .grid{grid-template-columns:1fr;}
+    }
+
+    .mini{
+      background: rgba(0,0,0,.26);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:16px;
+      padding:12px;
+    }
+    .mini h3{margin:0 0 8px; font-size:14px; letter-spacing:.2px}
+    .mini p{margin:0; color:var(--muted); font-size:13px; line-height:1.55}
+
+    /* "Heat" mini game */
+    .heatWrap{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap:10px;
+      margin-top:10px;
+    }
+    .heat{
+      position:relative;
+      border-radius:16px;
+      overflow:hidden;
+      border:1px solid rgba(255,255,255,.12);
+      background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(0,0,0,.18));
+      min-height:92px;
+      padding:10px;
+      cursor:pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: transform .12s ease, border-color .2s ease;
+    }
+    .heat:hover{border-color: rgba(255,255,255,.20)}
+    .heat:active{transform: scale(.99)}
+    .heat .label{font-size:12px; color:rgba(244,242,255,.78)}
+    .heat .big{
+      margin-top:8px;
+      font-weight:800;
+      font-size:14px;
+      letter-spacing:.2px;
+      line-height:1.15;
+      opacity:.95;
+    }
+    .heat .seal{
+      position:absolute; right:10px; bottom:10px;
+      width:34px; height:34px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.25);
+      display:grid; place-items:center;
+      box-shadow: 0 0 0 1px rgba(0,0,0,.12) inset;
+    }
+    .heat.revealed{
+      background: linear-gradient(135deg, rgba(255,75,209,.18), rgba(53,215,255,.16));
+      border-color: rgba(255,255,255,.22);
+    }
+    .heat.revealed .seal{box-shadow: 0 0 25px rgba(53,215,255,.35)}
+
+    .progressRow{display:flex; gap:10px; align-items:center; margin-top:12px; flex-wrap:wrap}
+    .bar{
+      flex:1 1 220px;
+      height:10px;
+      border-radius:999px;
+      background: rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.10);
+      overflow:hidden;
+    }
+    .bar > i{display:block; height:100%; width:0%; background: linear-gradient(90deg, rgba(255,75,209,.9), rgba(53,215,255,.9));}
+    .small{font-size:12px; color:var(--muted)}
+
+    /* Letter */
+    .letter{
+      display:grid;
+      grid-template-columns: 150px 1fr;
+      gap:12px;
+      align-items:start;
+    }
+    @media (max-width: 520px){
+      .letter{grid-template-columns:1fr}
+    }
+
+    .photo{
+      border-radius:16px;
+      overflow:hidden;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.25);
+      box-shadow: 0 10px 35px rgba(0,0,0,.35);
+    }
+    .photo img{width:100%; height:auto; display:block}
+    .photo .cap{
+      padding:10px;
+      font-size:12px;
+      color:rgba(244,242,255,.78);
+      border-top:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.18);
+    }
+
+    .paper{
+      border-radius:16px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.24);
+      padding:14px;
+      position:relative;
+      overflow:hidden;
+    }
+    .paper::before{
+      content:"";
+      position:absolute; inset:0;
+      background:
+        radial-gradient(900px 400px at 10% 20%, rgba(255,75,209,.10), transparent 60%),
+        radial-gradient(900px 400px at 90% 60%, rgba(53,215,255,.10), transparent 60%);
+      pointer-events:none;
+    }
+    .paper p{position:relative; margin:0 0 10px; color:rgba(244,242,255,.88); line-height:1.72; font-size:14px}
+    .paper p:last-child{margin:0}
+
+    .sig{
+      position:relative;
+      display:flex;
+      gap:10px;
+      align-items:center;
+      margin-top:12px;
+      padding-top:12px;
+      border-top:1px dashed rgba(255,255,255,.18);
+      color:rgba(244,242,255,.85);
+      font-weight:700;
+    }
+    .sig small{display:block; font-weight:600; color:rgba(244,242,255,.68)}
+
+    /* Right column media */
+    .media{
+      padding:14px;
+      display:grid;
+      gap:12px;
+    }
+
+    .heroMedia{
+      border-radius:16px;
+      overflow:hidden;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.25);
+      position:relative;
+      box-shadow: 0 12px 40px rgba(0,0,0,.45);
+    }
+    .heroMedia video, .heroMedia img{
+      width:100%; height:auto; display:block;
+    }
+    .heroTag{
+      position:absolute; left:12px; top:12px;
+      display:flex; gap:8px; align-items:center;
+      padding:8px 10px;
+      border-radius:999px;
+      background: rgba(0,0,0,.40);
+      border:1px solid rgba(255,255,255,.14);
+      font-size:12px;
+      color:rgba(244,242,255,.82);
+      backdrop-filter: blur(10px);
+    }
+
+    .gifRow{
+      display:grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap:10px;
+    }
+    @media (max-width: 860px){
+      .gifRow{grid-template-columns: repeat(2, 1fr);}
+    }
+    @media (max-width: 420px){
+      .gifRow{grid-template-columns:1fr;}
+    }
+
+    .gifCard{
+      border-radius:16px;
+      overflow:hidden;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.20);
+      position:relative;
+    }
+    .gifCard img{width:100%; height:170px; object-fit:cover; display:block; filter:contrast(1.05) brightness(.9)}
+    .gifCard .txt{
+      position:absolute; left:10px; bottom:10px; right:10px;
+      padding:9px 10px;
+      border-radius:14px;
+      background: rgba(0,0,0,.45);
+      border:1px solid rgba(255,255,255,.12);
+      font-size:12px;
+      color:rgba(244,242,255,.86);
+      backdrop-filter: blur(10px);
+    }
+
+    /* Toast */
+    .toast{
+      position:fixed;
+      left:50%;
+      bottom: 18px;
+      transform: translateX(-50%);
+      width:min(620px, calc(100% - 24px));
+      padding:12px 12px;
+      border-radius:16px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.52);
+      backdrop-filter: blur(12px);
+      box-shadow: 0 14px 55px rgba(0,0,0,.55);
+      display:flex;
+      gap:10px;
+      align-items:flex-start;
+      opacity:0;
+      pointer-events:none;
+      transition: opacity .25s ease, transform .25s ease;
+      z-index:50;
+    }
+    .toast.show{opacity:1; pointer-events:auto; transform: translateX(-50%) translateY(-6px)}
+    .toast .emoji{width:34px; height:34px; border-radius:14px; display:grid; place-items:center; background:rgba(255,255,255,.10); border:1px solid rgba(255,255,255,.12)}
+    .toast .tTitle{margin:0; font-weight:800; font-size:13px}
+    .toast .tBody{margin:2px 0 0; color:rgba(244,242,255,.78); font-size:12.5px; line-height:1.45}
+
+    /* Tiny footer */
+    .foot{padding:12px 16px 14px; border-top:1px solid var(--line); color:rgba(244,242,255,.62); font-size:12px; display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:space-between}
+    .kbd{font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; font-size:11px; padding:4px 6px; border-radius:10px; border:1px solid rgba(255,255,255,.12); background:rgba(0,0,0,.25)}
+
+    /* Reduced motion */
+    @media (prefers-reduced-motion: reduce){
+      *{scroll-behavior:auto !important; transition:none !important; animation:none !important}
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Backgrounds (rotate between your files) -->
+  <div class="bg" aria-hidden="true">
+    <img class="bgMedia active" src="assets/background/01.webp" alt="" />
+    <img class="bgMedia" src="assets/background/02.webp" alt="" />
+    <img class="bgMedia" src="assets/background/03.webp" alt="" />
+    <!-- GIF background is heavier, but looks awesome on mobile too -->
+    <img class="bgMedia" src="assets/background/04.gif" alt="" />
+  </div>
+
+  <canvas class="rain" id="rain" aria-hidden="true"></canvas>
+
+  <div class="wrap">
+    <div class="shell">
+
+      <!-- LEFT: main interactive card -->
+      <section class="card" role="region" aria-label="Main">
+        <div class="top">
+          <div class="badgeRow">
+            <span class="badge"><span class="dot pink"></span>Yakuza 0 mode</span>
+            <span class="badge"><span class="dot"></span>From Brazil to Russia</span>
+            <span class="badge"><span class="dot gold"></span>Almost 3 years</span>
+          </div>
+          <h1>Nika, you are my favorite substory.</h1>
+          <p class="sub">
+            A tiny love page made by <strong>Felipe</strong>.
+            It is cute, a little silly, and 100% powered by Yakuza 0 energy.
+          </p>
+        </div>
+
+        <div class="actions">
+          <button class="primary" id="btnPlay" type="button" aria-pressed="false">
+            <span class="icon">♪</span>
+            Play Baka Mitai
+          </button>
+          <button id="btnSurprise" type="button">
+            <span class="icon">★</span>
+            Surprise me
+          </button>
+          <button id="btnNeon" type="button">
+            <span class="icon">⚡</span>
+            Neon toggle
+          </button>
+          <button id="btnCopy" type="button">
+            <span class="icon">✉</span>
+            Copy tiny message
+          </button>
+        </div>
+
+        <div class="tabs" role="tablist" aria-label="Sections">
+          <div class="tab active" role="tab" tabindex="0" aria-selected="true" data-tab="story">Story</div>
+          <div class="tab" role="tab" tabindex="-1" aria-selected="false" data-tab="heat">Heat Actions</div>
+          <div class="tab" role="tab" tabindex="-1" aria-selected="false" data-tab="letter">Letter</div>
+        </div>
+
+        <div class="panel" id="panel-story" role="tabpanel">
+          <div class="grid">
+            <div class="mini">
+              <h3>How it started</h3>
+              <p>
+                We met on Tandem.
+                Two people, two languages, one very suspicious amount of feelings.
+                Somehow it became <strong>almost three years</strong> of us.
+              </p>
+            </div>
+            <div class="mini">
+              <h3>How it is going</h3>
+              <p>
+                I still get shy.
+                I still miss you.
+                And yes, I still believe Kiryu would approve this relationship.
+              </p>
+            </div>
+            <div class="mini">
+              <h3>Things I love about you</h3>
+              <p>
+                Your voice.
+                Your mind.
+                Your patience with my chaos.
+                Your laugh that can heal a whole city.
+              </p>
+            </div>
+            <div class="mini">
+              <h3>One promise</h3>
+              <p>
+                If life is a long side quest, I want to keep choosing you.
+                Again and again.
+                No skips.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel" id="panel-heat" role="tabpanel" hidden>
+          <div class="mini">
+            <h3>Heat Actions: Tap to reveal</h3>
+            <p>
+              Tap the cards. Each one unlocks a small compliment.
+              When you find them all, a secret reward appears.
+            </p>
+
+            <div class="heatWrap" id="heatWrap" aria-label="Heat actions grid">
+              <!-- JS fills this -->
+            </div>
+
+            <div class="progressRow" aria-label="Progress">
+              <div class="bar" aria-hidden="true"><i id="barFill"></i></div>
+              <div class="small"><span id="found">0</span>/9 found</div>
+            </div>
+
+            <div id="reward" style="margin-top:12px; display:none">
+              <div class="mini" style="border-color: rgba(43,255,152,.25); background: rgba(43,255,152,.06)">
+                <h3 style="margin-bottom:8px">Secret unlocked</h3>
+                <p style="margin-bottom:10px">
+                  You found them all.
+                  That means: you are officially stronger than the whole Dojima Family.
+                </p>
+                <button id="btnShowVideo" type="button" class="primary">
+                  <span class="icon">▶</span>
+                  Show the reward
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel" id="panel-letter" role="tabpanel" hidden>
+          <div class="letter">
+            <div class="photo">
+              <img src="assets/img/selfie.jpg" alt="Photo" />
+              <div class="cap">A very serious man doing very serious romance (me).</div>
+            </div>
+
+            <div class="paper">
+              <p><strong>Dear Nika,</strong></p>
+              <p>
+                I wanted to make something small but special.
+                Something that would make you smile like a Yakuza 0 cutscene: dramatic, warm, and a little bit funny.
+              </p>
+              <p>
+                Sometimes I get shy and I act like I have no gift.
+                But you are my gift.
+                You turned random language practice into a real story.
+                And I still cannot believe I get to love a Russian girl who understands my weird sense of humor.
+              </p>
+              <p>
+                Thank you for being patient with me.
+                Thank you for being you.
+                And if you ever feel sad, remember this:
+                I am on your side.
+                Always.
+              </p>
+              <p>
+                <em>Я люблю тебя</em>.
+                And yes… I would sing Baka Mitai for you even if my neighbors call the police.
+              </p>
+
+              <div class="sig">
+                <div style="width:38px;height:38px;border-radius:16px;background:rgba(255,75,209,.14);border:1px solid rgba(255,255,255,.14);display:grid;place-items:center">❤</div>
+                <div>
+                  Felipe
+                  <small>Your Brazilian idiot (in the best way)</small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="foot">
+          <div>
+            Tip: press <span class="kbd">Surprise me</span> when you need a quick smile.
+          </div>
+          <div>
+            Made with love and a suspicious amount of neon.
+          </div>
+        </div>
+      </section>
+
+      <!-- RIGHT: media & cute reactions -->
+      <aside class="card" role="region" aria-label="Extras">
+        <div class="top">
+          <div class="badgeRow">
+            <span class="badge"><span class="dot"></span>Bonus cutscenes</span>
+            <span class="badge"><span class="dot pink"></span>Reaction pack</span>
+          </div>
+          <h1 style="font-size: clamp(20px, 3.4vw, 30px); margin-top:10px">Side content</h1>
+          <p class="sub">Because every good story needs extra scenes.</p>
+        </div>
+
+        <div class="media">
+          <div class="heroMedia" id="rewardVideo" style="display:none">
+            <div class="heroTag"><span class="dot gold"></span>Reward video</div>
+            <video id="video" src="assets/img/congratulations.mp4" playsinline controls preload="metadata"></video>
+          </div>
+
+          <div class="heroMedia">
+            <div class="heroTag"><span class="dot pink"></span>Dance break</div>
+            <img src="assets/img/dance.webp" alt="Dance" />
+          </div>
+
+          <div class="gifRow">
+            <div class="gifCard">
+              <img src="assets/img/embarassed.gif" alt="Embarrassed" />
+              <div class="txt">Me trying to act cool when you say cute things.</div>
+            </div>
+            <div class="gifCard">
+              <img src="assets/img/loveu.gif" alt="Love" />
+              <div class="txt">When I remember you are mine (yes, still).</div>
+            </div>
+            <div class="gifCard">
+              <img src="assets/img/letter.gif" alt="Letter" />
+              <div class="txt">This is basically me writing this page.</div>
+            </div>
+            <div class="gifCard">
+              <img src="assets/img/cry.gif" alt="Cry" />
+              <div class="txt">If you miss me, I miss you more. No debate.</div>
+            </div>
+            <div class="gifCard">
+              <img src="assets/img/harukawin.webp" alt="Win" />
+              <div class="txt">You after you defeat my bad mood. Instant victory.</div>
+            </div>
+            <div class="gifCard">
+              <img src="assets/img/ilate.gif" alt="Late" />
+              <div class="txt">Me: "I'm late". Also me: still yours. Always.</div>
+            </div>
+          </div>
+
+          <div class="mini">
+            <h3>One more thing</h3>
+            <p>
+              If you want, we can treat this like a real Yakuza substory.
+              You open the page, you press play, you smile… and I get the reward.
+              (The reward is your message, obviously.)
+            </p>
+          </div>
+
+          <div class="mini" style="border-color: rgba(255,204,77,.25); background: rgba(255,204,77,.05)">
+            <h3>Small joke</h3>
+            <p>
+              Long distance is like an endless taxi ride.
+              But don't worry.
+              I am not paying with money.
+              I am paying with love.
+              (This sounded smarter in my head.)
+            </p>
+          </div>
+        </div>
+      </aside>
+
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite">
+    <div class="emoji" id="toastEmoji">✨</div>
+    <div>
+      <p class="tTitle" id="toastTitle">Done</p>
+      <p class="tBody" id="toastBody">Ok.</p>
+    </div>
+  </div>
+
+  <audio id="audio" src="assets/music/bakamitai.mp3" preload="auto"></audio>
+
+  <script>
+    // ---------- tiny helpers ----------
+    const $ = (q, el=document) => el.querySelector(q);
+    const $$ = (q, el=document) => Array.from(el.querySelectorAll(q));
+
+    function toast(title, body, emoji='✨'){
+      const t = $('#toast');
+      $('#toastTitle').textContent = title;
+      $('#toastBody').textContent = body;
+      $('#toastEmoji').textContent = emoji;
+      t.classList.add('show');
+      clearTimeout(toast._tm);
+      toast._tm = setTimeout(() => t.classList.remove('show'), 2600);
+    }
+
+    // ---------- background rotation ----------
+    const bgEls = $$('.bgMedia');
+    let bgIndex = 0;
+    function nextBg(){
+      bgEls[bgIndex].classList.remove('active');
+      bgIndex = (bgIndex + 1) % bgEls.length;
+      bgEls[bgIndex].classList.add('active');
+    }
+
+    // ---------- audio (user gesture required on mobile) ----------
+    const audio = $('#audio');
+    const btnPlay = $('#btnPlay');
+    let isPlaying = false;
+
+    async function toggleAudio(){
+      try{
+        if(!isPlaying){
+          await audio.play();
+          isPlaying = true;
+          btnPlay.setAttribute('aria-pressed', 'true');
+          btnPlay.innerHTML = '<span class="icon">⏸</span> Pause Baka Mitai';
+          toast('Music on', 'Baka Mitai is playing.', '♪');
+        } else {
+          audio.pause();
+          isPlaying = false;
+          btnPlay.setAttribute('aria-pressed', 'false');
+          btnPlay.innerHTML = '<span class="icon">♪</span> Play Baka Mitai';
+          toast('Music off', 'Paused.', '⏸');
+        }
+      } catch (e){
+        toast('Tap again', 'Your browser wants one more tap to start audio.', '👆');
+      }
+    }
+
+    btnPlay.addEventListener('click', toggleAudio);
+
+    // ---------- Surprise ----------
+    const surprises = [
+      { t:'Substory started', b:'You found a new reason to smile today.', e:'🎬' },
+      { t:'Heat gauge full', b:'Warning: you are too cute. It is dangerous.', e:'🔥' },
+      { t:'Friendship +100', b:'Brazil + Russia alliance is unstoppable.', e:'🤝' },
+      { t:'Karaoke time', b:'Sing with me. No escaping.', e:'🎤' },
+      { t:'Side quest', b:'Send me one emoji right now (I will guess your mood).', e:'🕵️' }
+    ];
+
+    $('#btnSurprise').addEventListener('click', () => {
+      nextBg();
+      const s = surprises[Math.floor(Math.random()*surprises.length)];
+      toast(s.t, s.b, s.e);
+
+      // little extra: scroll to whichever tab you are on
+      window.scrollTo({ top: 0, behavior:'smooth' });
+    });
+
+    // neon toggle
+    let neonOn = true;
+    $('#btnNeon').addEventListener('click', () => {
+      neonOn = !neonOn;
+      const canvas = $('#rain');
+      canvas.style.opacity = neonOn ? '.55' : '.12';
+      toast('Neon', neonOn ? 'Neon ON' : 'Neon LOW', neonOn ? '⚡' : '🌙');
+    });
+
+    // copy tiny message
+    const tinyMsg = "Nika, I love you. Thank you for choosing me again and again. Я люблю тебя. — Felipe";
+    $('#btnCopy').addEventListener('click', async () => {
+      try{
+        await navigator.clipboard.writeText(tinyMsg);
+        toast('Copied', 'Now paste it anywhere.', '📋');
+      } catch {
+        toast('Copy failed', 'Your browser blocked clipboard. Long press and select manually.', '🫠');
+      }
+    });
+
+    // ---------- tabs ----------
+    const tabs = $$('.tab');
+    const panels = {
+      story: $('#panel-story'),
+      heat: $('#panel-heat'),
+      letter: $('#panel-letter')
+    };
+
+    function setTab(name){
+      tabs.forEach(t => {
+        const on = t.dataset.tab === name;
+        t.classList.toggle('active', on);
+        t.setAttribute('aria-selected', on ? 'true' : 'false');
+        t.tabIndex = on ? 0 : -1;
+      });
+      Object.entries(panels).forEach(([k, el]) => {
+        el.hidden = (k !== name);
+      });
+    }
+
+    tabs.forEach(t => {
+      t.addEventListener('click', () => setTab(t.dataset.tab));
+      t.addEventListener('keydown', (e) => {
+        if(e.key === 'Enter' || e.key === ' '){
+          e.preventDefault();
+          setTab(t.dataset.tab);
+        }
+      });
+    });
+
+    // ---------- heat mini game ----------
+    const heatPhrases = [
+      { label:'Heat Action', big:'You make my days feel lighter.' , seal:'🔥' },
+      { label:'Heat Action', big:'Your smile is my favorite cutscene.' , seal:'✨' },
+      { label:'Heat Action', big:'I trust you more than Kiryu trusts his instincts.' , seal:'🐉' },
+      { label:'Heat Action', big:'Even your chaos is beautiful to me.' , seal:'💫' },
+      { label:'Heat Action', big:'You are strong. And soft. Perfect combo.' , seal:'🖤' },
+      { label:'Heat Action', big:'I love your voice. A lot.' , seal:'🎧' },
+      { label:'Heat Action', big:'With you, distance feels smaller.' , seal:'🗺️' },
+      { label:'Heat Action', big:'You are my safe place.' , seal:'🏠' },
+      { label:'Heat Action', big:'I choose you. Again and again.' , seal:'❤' }
+    ];
+
+    const heatWrap = $('#heatWrap');
+    let found = 0;
+
+    function updateProgress(){
+      $('#found').textContent = String(found);
+      const pct = Math.round((found / heatPhrases.length) * 100);
+      $('#barFill').style.width = pct + '%';
+      if(found === heatPhrases.length){
+        $('#reward').style.display = 'block';
+        toast('Unlocked!', 'Secret reward is ready.', '🏆');
+      }
+    }
+
+    // shuffle
+    const shuffled = heatPhrases
+      .map(x => ({...x, r: Math.random()}))
+      .sort((a,b)=>a.r-b.r)
+      .map(({r,...x})=>x);
+
+    shuffled.forEach((h, idx) => {
+      const div = document.createElement('div');
+      div.className = 'heat';
+      div.setAttribute('role', 'button');
+      div.setAttribute('tabindex', '0');
+      div.setAttribute('aria-pressed', 'false');
+      div.innerHTML = `
+        <div class="label">???</div>
+        <div class="big">Tap me</div>
+        <div class="seal">?</div>
+      `;
+
+      const reveal = () => {
+        if(div.classList.contains('revealed')) return;
+        div.classList.add('revealed');
+        div.setAttribute('aria-pressed', 'true');
+        div.querySelector('.label').textContent = h.label + ' #' + (idx+1);
+        div.querySelector('.big').textContent = h.big;
+        div.querySelector('.seal').textContent = h.seal;
+        found += 1;
+        updateProgress();
+      };
+
+      div.addEventListener('click', reveal);
+      div.addEventListener('keydown', (e) => {
+        if(e.key === 'Enter' || e.key === ' '){
+          e.preventDefault();
+          reveal();
+        }
+      });
+
+      heatWrap.appendChild(div);
+    });
+
+    updateProgress();
+
+    // reward video
+    $('#btnShowVideo').addEventListener('click', () => {
+      $('#rewardVideo').style.display = 'block';
+      toast('Reward', 'Scroll a bit and press play.', '▶');
+      $('#rewardVideo').scrollIntoView({ behavior:'smooth', block:'center' });
+    });
+
+    // ---------- neon rain canvas ----------
+    const canvas = $('#rain');
+    const ctx = canvas.getContext('2d');
+    let W=0,H=0, drops=[];
+
+    function resize(){
+      const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+      W = canvas.width = Math.floor(window.innerWidth * dpr);
+      H = canvas.height = Math.floor(window.innerHeight * dpr);
+      canvas.style.width = window.innerWidth + 'px';
+      canvas.style.height = window.innerHeight + 'px';
+      ctx.setTransform(dpr,0,0,dpr,0,0);
+
+      const count = Math.floor(window.innerWidth / 22);
+      drops = new Array(count).fill(0).map(() => ({
+        x: Math.random() * window.innerWidth,
+        y: Math.random() * window.innerHeight,
+        s: 1 + Math.random() * 2.2,
+        l: 70 + Math.random() * 160,
+        a: .15 + Math.random() * .25,
+        hue: Math.random() > .5 ? 315 : 195
+      }));
+    }
+
+    function tick(){
+      ctx.clearRect(0,0,window.innerWidth,window.innerHeight);
+      for(const d of drops){
+        ctx.strokeStyle = `hsla(${d.hue}, 90%, 65%, ${d.a})`;
+        ctx.lineWidth = d.s;
+        ctx.beginPath();
+        ctx.moveTo(d.x, d.y);
+        ctx.lineTo(d.x, d.y + d.l);
+        ctx.stroke();
+
+        d.y += 6 + d.s * 2.6;
+        if(d.y > window.innerHeight + d.l){
+          d.y = -d.l;
+          d.x = Math.random() * window.innerWidth;
+        }
+      }
+      requestAnimationFrame(tick);
+    }
+
+    window.addEventListener('resize', resize, { passive:true });
+    resize();
+    tick();
+
+    // first hello
+    setTimeout(() => toast('Hi Nika', 'Open tabs and explore the page.', '💖'), 600);
+  </script>
+</body>
+</html>
